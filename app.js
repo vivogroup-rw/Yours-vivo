@@ -540,6 +540,25 @@ async function processResponse(userMsg) {
     return await localBot(userMsg, name);
 }
 
+let currentAlarmAudio = new Audio();
+
+function showIncomingCallModal(title) {
+    document.getElementById("callAlarmTitle").innerText = title;
+    document.getElementById("callAlarmModal").style.display = "flex";
+    
+    // Grab user preferred audio track from local profile settings, default to Classic Bell
+    const chosenSound = localStorage.getItem("preferredSound") || "Classic Bell";
+    currentAlarmAudio.src = audioTracks[chosenSound] || "assets/sounds/bell.mp3";
+    currentAlarmAudio.loop = true;
+    currentAlarmAudio.play().catch(e => console.log("Audio playback waiting for user action."));
+}
+
+function dismissAlarmCall() {
+    currentAlarmAudio.pause();
+    currentAlarmAudio.currentTime = 0;
+    document.getElementById("callAlarmModal").style.display = "none";
+}
+
 // ============================================================
 //  GEMINI API
 // ============================================================
