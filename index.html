@@ -396,6 +396,19 @@
       window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => { }); });
     }
   </script>
+<!-- Top Popup Alarm Banner -->
+<div id="callAlarmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0, 0, 0, 0.5); z-index:9999; display:flex; align-items:flex-start; justify-content:center; padding-top: 20px; box-sizing: border-box;">
+    <div style="background:#0d0b1a; border: 2px solid #635bff; border-radius:15px; width:90%; max-width:400px; padding:15px 20px; color:white; box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 2.2rem;">⏰</div>
+            <div>
+                <h2 style="font-size: 1.1rem; margin: 0; font-weight: bold;" id="callAlarmTitle">Task Alert</h2>
+                <p style="color: #635bff; margin: 2px 0 0 0; font-size: 0.85rem;">Yours Vivo Reminder</p>
+            </div>
+        </div>
+        <button onclick="dismissAlarmCall()" style="background:#ff3b30; color:white; border:none; padding:8px 18px; font-size: 0.9rem; border-radius:20px; cursor:pointer; font-weight: bold; margin-left: 10px;">Dismiss</button>
+    </div>
+</div>
 </body>
 
 </html>
