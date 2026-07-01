@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.vivogroup_rw.twa",
+        "sha256_cert_fingerprints": ["3F:9D:7F:26:2A:F0:B4:4F:24:D9:51:5B:42:EA:B5:24:53:E2:FF:07:86:87:92:A5:BE:93:AD:3F:1A:E3:05:03"]
+      }
+    }]
