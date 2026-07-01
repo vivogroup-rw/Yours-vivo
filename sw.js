@@ -1,4 +1,4 @@
-const CACHE_NAME = 'assistant-vivo-cache-v1';
+const CACHE_NAME = 'assistant-vivo-cache-v2';
 const ASSETS = [
   './',
   './index.html',
