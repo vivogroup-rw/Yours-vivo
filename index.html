@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Yours Vivo</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#111111">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- EmailJS SDK -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       AUTH SCREEN
+       ============================================================ -->
+  <div id="auth-screen">
+    <img src="icon-192.png" alt="Yours Vivo" class="auth-logo">
+    <div class="auth-title">Yours Vivo</div>
+    <div class="auth-subtitle">Your personal AI companion.</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="showAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- ── LOGIN FORM ── -->
+    <div class="auth-form" id="form-login">
+      <div class="form-group">
+        <div class="form-label">Username</div>
+        <input class="form-input" type="text" id="login-username" placeholder="Enter your username"
+          autocomplete="username" autocapitalize="none">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Password</div>
+        <input class="form-input" type="password" id="login-password" placeholder="Enter your password"
+          autocomplete="current-password">
+      </div>
+      <div class="auth-error" id="login-error"></div>
+      <button class="btn-auth" id="btn-login">Sign In</button>
+      <div style="text-align:center;font-size:0.78rem;color:var(--muted);margin-top:4px">
+        Need help? <a href="mailto:vivogroup-rw@gmail.com"
+          style="color:var(--accent);text-decoration:none">vivogroup-rw@gmail.com</a>
+      </div>
+    </div>
+
+    <!-- ── SIGNUP FORM ── -->
+    <div class="auth-form" id="form-signup" style="display:none">
+
+      <!-- Section: Personal Information -->
+      <div class="form-divider">Personal Information</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">First Name</div>
+          <input class="form-input" type="text" id="signup-firstname" placeholder="John" autocapitalize="words">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Last Name</div>
+          <input class="form-input" type="text" id="signup-lastname" placeholder="Doe" autocapitalize="words">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">Gender</div>
+          <select class="form-select" id="signup-gender">
+            <option value="">— Select —</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="non-binary">Non-binary</option>
+            <option value="prefer-not">Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Country</div>
+          <select class="form-select" id="signup-country">
+            <option value="">— Select —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section: Account Details -->
+      <div class="form-divider" style="margin-top:4px">Account Details</div>
+
+      <div class="form-group">
+        <div class="form-label">Username</div>
+        <input class="form-input" type="text" id="signup-username" placeholder="Choose a unique username"
+          autocapitalize="none">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Email Address</div>
+        <input class="form-input" type="text" id="signup-email" placeholder="you@example.com" autocapitalize="none">
+      </div>
+
+      <!-- Section: Security -->
+      <div class="form-divider" style="margin-top:4px">Security</div>
+
+      <div class="form-group">
+        <div class="form-label">Password</div>
+        <input class="form-input" type="password" id="signup-password" placeholder="At least 6 characters">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Confirm Password</div>
+        <input class="form-input" type="password" id="signup-confirm" placeholder="Re-enter your password">
+      </div>
+
+      <div class="auth-error" id="signup-error"></div>
+      <button class="btn-auth" id="btn-signup">Create Account</button>
+      <div style="text-align:center;font-size:0.75rem;color:var(--muted);margin-top:2px">
+        By signing up you agree to our terms. Questions? <a href="mailto:vivogroup-rw@gmail.com"
+          style="color:var(--accent);text-decoration:none">vivogroup-rw@gmail.com</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MAIN APP SHELL
+       ============================================================ -->
+  <div id="app-container" style="display:none">
+
+    <header>
+      <h1>Yours Vivo</h1>
+      <div id="user-avatar-btn" class="user-avatar-badge" title="Profile">😊</div>
+    </header>
+
+    <div id="notification-banner">
+      <div>
+        <div id="notif-title" class="notif-title">Alert</div>
+        <div id="notif-desc" class="notif-desc"></div>
+      </div>
+      <button class="btn-notif-close" id="btn-close-banner">&times;</button>
+    </div>
+
+    <main>
+
+      <!-- Panel: Chat -->
+      <section id="panel-chat" class="panel active">
+        <div id="chat-messages"></div>
+        <div id="typing-indicator" class="typing-indicator" style="display:none">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+        <div id="chat-input-area">
+          <div class="input-wrap">
+            <input type="text" id="chat-input" placeholder="Message Vivo…" autocomplete="off">
+          </div>
+          <button class="btn-send" id="btn-send-message" aria-label="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Panel: Office -->
+      <section id="panel-office" class="panel">
+        <div class="panel-header">
+          <div class="section-title">
+            <svg style="width:16px;height:16px;stroke:currentColor;fill:none" viewBox="0 0 24 24" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Office
+          </div>
+          <button class="btn-add" id="btn-open-agenda-modal">+ Schedule</button>
+        </div>
+        <div class="agenda-list" id="agenda-list-container"></div>
+      </section>
+
+      <!-- Panel: Park -->
+      <section id="panel-park" class="panel">
+        <div class="park-header">
+          <div class="section-title">
+            <svg style="width:16px;height:16px;stroke:currentColor;fill:none" viewBox="0 0 24 24" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 6v6l4 2"></path>
+            </svg>
+            Memory Park
+          </div>
+          <div class="park-desc">Tap a bubble to revisit a memory.</div>
+        </div>
+        <div class="bubble-container" id="bubble-container"></div>
+      </section>
+
+      <!-- Panel: Settings -->
+      <section id="panel-settings" class="panel">
+        <div class="settings-list">
+
+          <!-- 1. Profile Info (top) -->
+          <div class="settings-group">
+            <div class="settings-group-title">My Profile</div>
+            <div class="profile-row"><span class="profile-key">Name</span><span class="profile-val"
+                id="prf-name">—</span></div>
+            <div class="profile-row"><span class="profile-key">Username</span><span class="profile-val"
+                id="prf-username">—</span></div>
+            <div class="profile-row"><span class="profile-key">Email</span><span class="profile-val"
+                id="prf-email">—</span></div>
+            <div class="profile-row"><span class="profile-key">Gender</span><span class="profile-val"
+                id="prf-gender">—</span></div>
+            <div class="profile-row"><span class="profile-key">Country</span><span class="profile-val"
+                id="prf-country">—</span></div>
+          </div>
+
+          <!-- 2. Avatar -->
+          <div class="settings-group">
+            <div class="settings-group-title">Avatar</div>
+            <div class="avatar-grid" id="settings-avatar-grid"></div>
+          </div>
+
+          <!-- 3. Appearance -->
+          <div class="settings-group">
+            <div class="settings-group-title">Appearance</div>
+            <div class="setting-item">
+              <label>Theme</label>
+              <div class="theme-selector">
+                <button class="theme-btn active" id="theme-dark" onclick="setTheme('dark')">🌑 Dark</button>
+                <button class="theme-btn" id="theme-light" onclick="setTheme('light')">☀️ Light</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. AI Engine -->
+          <div class="settings-group">
+            <div class="settings-group-title">AI Engine</div>
+            <div class="setting-row">
+              <label>Real Gemini AI <span>Needs internet + API key</span></label>
+              <label class="switch">
+                <input type="checkbox" id="setting-use-gemini">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-item" id="gemini-key-container" style="display:none">
+              <label for="setting-gemini-key">Gemini API Key</label>
+              <input type="text" id="setting-gemini-key" placeholder="AIzaSy…">
+            </div>
+          </div>
+
+          <!-- 5. Alerts -->
+          <div class="settings-group">
+            <div class="settings-group-title">Alerts</div>
+            <div class="setting-row">
+              <label>Sound chimes <span>Play audio on alerts</span></label>
+              <label class="switch">
+                <input type="checkbox" id="setting-sound" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>End of Day Review</label>
+              <input type="time" id="setting-eod-time" value="21:00">
+            </div>
+            <div class="setting-item">
+              <label>Tomorrow Planning</label>
+              <input type="time" id="setting-tomorrow-time" value="22:00">
+            </div>
+          </div>
+
+          <!-- 6. Support -->
+          <div class="settings-group">
+            <div class="settings-group-title">Support</div>
+            <div style="font-size:0.84rem;color:var(--muted);line-height:1.6">
+              For help or feature requests, email us at:<br>
+              <a href="mailto:vivogroup-rw@gmail.com"
+                style="color:var(--accent);font-weight:600;text-decoration:none">vivogroup-rw@gmail.com</a>
+            </div>
+          </div>
+
+          <!-- 7. Account -->
+          <div class="settings-group">
+            <div class="settings-group-title">Account</div>
+            <button class="btn-danger" id="btn-logout">Sign Out</button>
+            <button class="btn-danger" id="btn-clear-data">Clear All Data</button>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav>
+      <a class="nav-item active" data-panel="chat">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Vivo
+      </a>
+      <a class="nav-item" data-panel="office">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        Office
+      </a>
+      <a class="nav-item" data-panel="park">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5"></path>
+          <path d="M2 12l10 5 10-5"></path>
+        </svg>
+        Park
+      </a>
+      <a class="nav-item" data-panel="settings">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+        Settings
+      </a>
+    </nav>
+
+    <!-- Modal: Add Agenda -->
+    <div id="modal-agenda" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-title">New Agenda</div>
+        <div class="setting-item">
+          <label for="agenda-input-title">Title</label>
+          <input type="text" id="agenda-input-title" placeholder="e.g. Team standup">
+        </div>
+        <div class="setting-item">
+          <label for="agenda-input-time">Date & Time</label>
+          <input type="datetime-local" id="agenda-input-time">
+        </div>
+        <div class="setting-item">
+          <label for="agenda-input-duration">Duration (minutes)</label>
+          <input type="text" id="agenda-input-duration" value="30">
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="btn-cancel-agenda">Cancel</button>
+          <button class="btn-primary" id="btn-save-agenda">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Memory Detail -->
+    <div id="modal-memory" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-title" id="memory-view-title">Memory</div>
+        <div id="memory-view-date" style="font-size:.76rem;color:var(--muted)"></div>
+        <div id="memory-view-content" style="font-size:.88rem;line-height:1.5;margin-top:8px;white-space:pre-wrap">
+        </div>
+        <div class="modal-actions">
+          <button class="btn-danger" id="btn-delete-memory">Delete</button>
+          <button class="btn-secondary" id="btn-close-memory">Close</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /#app-container -->
+
+  <script src="db.js"></script>
+  <script src="agenda.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Auth tab switcher (available before app.js DOMContentLoaded)
+    function showAuthTab(tab) {
+      document.getElementById('form-login').style.display = (tab === 'login') ? 'flex' : 'none';
+      document.getElementById('form-signup').style.display = (tab === 'signup') ? 'flex' : 'none';
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+    }
+    // Theme setter (called from HTML buttons)
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('vivo_theme', theme);
+      document.getElementById('theme-dark').classList.toggle('active', theme === 'dark');
+      document.getElementById('theme-light').classList.toggle('active', theme === 'light');
+    }
+    // Apply theme immediately on load (prevents flash)
+    (function () {
+      const t = localStorage.getItem('vivo_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => { }); });
+    }
+  </script>
+</body>
+
+</html>
