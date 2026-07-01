@@ -587,23 +587,95 @@ Otherwise: {"reply":"...", "schedule":{"create":false}}`;
 //  LOCAL OFFLINE BOT
 // ============================================================
 async function localBot(userMsg, name) {
-    const msg = userMsg.toLowerCase();
-
-    // Schedule detection: "schedule gym tomorrow at 18:00"
-    const m = userMsg.match(/(?:schedule|plan|add|remind)\s+(.+?)\s+(?:at|@)\s+(\d{1,2}:\d{2})(?:\s+(today|tomorrow))?/i);
-    if (m) {
-        const title = m[1].trim();
-        const clock = m[2];
-        const day = (m[3] || 'today').toLowerCase();
-        const d = new Date();
-        if (day === 'tomorrow') d.setDate(d.getDate() + 1);
-        const [h, min] = clock.split(':');
-        d.setHours(parseInt(h), parseInt(min), 0, 0);
-        const off = d.getTimezoneOffset();
-        const fmt = new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
-        await window.appDb.saveAgenda({ title, time: fmt, duration: 30, status: 'pending', checkin_shown: false });
-        return `📅 Done! **${title}** scheduled ${day} at ${clock}.`;
+    const msg = userMsg.toLowerCase().trim();
+    
+    // Check if user is trying to schedule/remind
+    if (!/(schedule|plan|add|remind|remind me to)/i.test(msg)) {
+        return null; // Pass to AI if not a scheduling action
     }
+
+    // Clean action prefixes to find the actual task title
+    let title = userMsg.replace(/(schedule|plan|add|remind me to|remind me|remind)/i, "").trim();
+    
+    let targetDate = new Date();
+    let timeFound = false;
+
+    // Pattern A: Match relative times like "in 30 min", "in 2 hours"
+    const relativeMatch = msg.match(/in\s+(\d+)\s*(min|minute|hour|hr)s?/i);
+    
+    // Pattern B: Match static times like "at 6pm", "at 18:30", "@ 5:15 am"
+    const staticMatch = msg.match(/(?:at|@)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?|\d{1,2}:\d{2})/i);
+
+    if (relativeMatch) {
+        const amount = parseInt(relativeMatch[1], 10);
+        const unit = relativeMatch[2].toLowerCase();
+        
+        if (unit.startsWith("min")) {
+            targetDate.setMinutes(targetDate.getMinutes() + amount);
+        } else if (unit.startsWith("hour") || unit.startsWith("hr")) {
+            targetDate.setHours(targetDate.getHours() + amount);
+        }
+        
+        // Clean the time phrasing out of the final task title
+        title = title.replace(/in\s+\d+\s*(min|minute|hour|hr)s?/i, "").trim();
+        timeFound = true;
+    } else if (staticMatch) {
+        let timeRaw = staticMatch[1].toLowerCase().trim();
+        let hours = 0, minutes = 0;
+
+        if (timeRaw.includes('am') || timeRaw.includes('pm')) {
+            const isPm = timeRaw.includes('pm');
+            const digits = timeRaw.replace(/(am|pm)/, '').trim();
+            if (digits.includes(':')) {
+                const parts = digits.split(':');
+                hours = parseInt(parts[0], 10);
+                minutes = parseInt(parts[1], 10);
+            } else {
+                hours = parseInt(digits, 10);
+            }
+            if (isPm && hours < 12) hours += 12;
+            if (!isPm && hours === 12) hours = 0;
+        } else {
+            const parts = timeRaw.split(':');
+            hours = parseInt(parts[0], 10);
+            minutes = parseInt(parts[1], 10) || 0;
+        }
+
+        // Check if user specified tomorrow
+        if (msg.includes("tomorrow")) {
+            targetDate.setDate(targetDate.getDate() + 1);
+        } else if (targetDate.getHours() > hours || (targetDate.getHours() === hours && targetDate.getMinutes() > minutes)) {
+            // If time already passed today, assume tomorrow
+            targetDate.setDate(targetDate.getDate() + 1);
+        }
+
+        targetDate.setHours(hours, minutes, 0, 0);
+        title = title.replace(/(?:at|@)\s+.+$/i, "").replace(/today|tomorrow/i, "").trim();
+        timeFound = true;
+    }
+
+    if (timeFound) {
+        // Clean up remaining filler words from title
+        title = title.replace(/^(to\s+)/i, "").trim();
+        
+        const offset = targetDate.getTimezoneOffset();
+        const formattedTime = new Date(targetDate.getTime() - offset * 60000).toISOString().slice(0, 16);
+        
+        await window.appDb.saveAgenda({ 
+            title: title || "Task Reminder", 
+            time: formattedTime, 
+            duration: 30, 
+            status: 'pending', 
+            checkin_shown: false 
+        });
+
+        const displayTime = targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const displayDay = targetDate.toDateString() === new Date().toDateString() ? "today" : "tomorrow";
+        return `📅 Done! I've scheduled **${title}** for ${displayDay} at ${displayTime}.`;
+    }
+
+    return "I couldn't understand the time setup. Try saying: *'remind me to stop my movie at 6pm'* or *'schedule workout in 30 min'*";
+}
 
     if (msg.match(/\b(hi|hello|hey|morning|afternoon|evening)\b/))
         return `Hey ${name}! What are we planning today?`;
