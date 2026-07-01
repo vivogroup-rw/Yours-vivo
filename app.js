@@ -694,3 +694,43 @@ async function localBot(userMsg, name) {
 
     return `Got it, ${name}. If you want to schedule something just say *"schedule [task] at [time]"*. I'll be here!`;
 }
+// Array of available audio alert choices
+const audioTracks = {
+    "Classic Bell": "assets/sounds/bell.mp3",
+    "Digital Alarm": "assets/sounds/digital.mp3",
+    "Soft Chime": "assets/sounds/chime.mp3"
+};
+
+// Check current task alert due times
+async function checkPendingAgendas() {
+    const allTasks = await window.appDb.getAgendas(); // Pulls active lists
+    const nowStr = new Date().toISOString().slice(0, 16);
+    
+    allTasks.forEach(async (task) => {
+        if (task.time === nowStr && !task.checkin_shown) {
+            task.checkin_shown = true;
+            await window.appDb.saveAgenda(task); // mark triggered
+            
+            // 1. Send system level banner notification
+            triggerNativeNotification(task.title);
+            
+            // 2. Launch Full screen call style warning window
+            showIncomingCallModal(task.title);
+        }
+    });
+}
+setInterval(checkPendingAgendas, 30000); // Check every 30 seconds
+
+// Fixed Native Push Banner Trigger
+function triggerNativeNotification(taskTitle) {
+    if (Notification.permission === "granted") {
+        navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification("Yours Vivo Alert!", {
+                body: `Time to: ${taskTitle}`,
+                icon: "icon-192.png",
+                vibrate: [200, 100, 200],
+                tag: "agenda-alert"
+            });
+        });
+    }
+}
