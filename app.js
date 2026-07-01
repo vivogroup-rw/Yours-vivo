@@ -92,6 +92,64 @@ document.addEventListener('DOMContentLoaded', async () => {
         await launchApp(true);
     });
 
+    async function checkAndRotateDay() {
+    const todayStr = new Date().toDateString();
+    const lastSavedDay = localStorage.getItem("last_active_date");
+
+    if (lastSavedDay && lastSavedDay !== todayStr) {
+        // 1. Gather all today's current messages and agendas
+        const currentChats = JSON.parse(localStorage.getItem("current_chat_logs") || "[]");
+        const agendas = await window.appDb.getAgendas();
+        const todaysAgendas = agendas.filter(a => new Date(a.time).toDateString() === lastSavedDay);
+
+        // 2. Bundle into a new history entry package inside "Memory Park"
+        const memoryParkArchive = JSON.parse(localStorage.getItem("memory_park_history") || "{}");
+        memoryParkArchive[lastSavedDay] = {
+            chats: currentChats,
+            agendas: todaysAgendas
+        };
+        
+        localStorage.setItem("memory_park_history", JSON.stringify(memoryParkArchive));
+
+        // 3. Clear active screen lists for the fresh day
+        localStorage.setItem("current_chat_logs", JSON.stringify([]));
+        document.getElementById("chat-window-element").innerHTML = ""; // Wipe visual chat screen UI container
+    }
+    localStorage.setItem("last_active_date", todayStr);
+}
+// Run this check immediately whenever the app is launched
+checkAndRotateDay();
+
+    function loadUserProfile() {
+    const currentUser = JSON.parse(localStorage.getItem("user_signup_data") || "null");
+    
+    if (currentUser) {
+        document.getElementById("profile-username-display").innerText = `Username: ${currentUser.username}`;
+        document.getElementById("profile-name-display").innerText = `Name: ${currentUser.fullName || 'Not set'}`;
+    } else {
+        document.getElementById("profile-username-display").innerText = "Guest User Profile";
+    }
+}
+
+    function handleForgotPassword() {
+    const inputUsername = prompt("Please enter your current account username:");
+    const savedUser = JSON.parse(localStorage.getItem("user_signup_data") || "null");
+
+    if (!savedUser || savedUser.username !== inputUsername) {
+        alert("Account username not found. Please try again.");
+        return;
+    }
+
+    const newPassword = prompt("Username verified! Enter your new password:");
+    if (newPassword && newPassword.trim().length >= 4) {
+        savedUser.password = newPassword.trim();
+        localStorage.setItem("user_signup_data", JSON.stringify(savedUser));
+        alert("Password updated successfully! You can now log in.");
+    } else {
+        alert("Invalid password length. Update cancelled.");
+    }
+}
+
     // ── Auth: Sign In ────────────────────────────────────────
     document.getElementById('btn-login').addEventListener('click', async () => {
         const username = document.getElementById('login-username').value.trim();
